@@ -14,4 +14,4 @@ FAILURE_MESSAGE="action: test_echo_server | result: fail"
 docker run --rm --network $DOCKER_NETWORK --name $CONTAINER_NAME $IMAGE \
     sh -c "echo $SENT_MESSAGE \
     | nc $SERVER_ADDRESS \
-    | grep -q $SENT_MESSAGE && (echo \"$SUCCESS_MESSAGE\"; exit 0)  || (echo \"$FAILURE_MESSAGE\"; exit 1)"
+    | grep -q -x $SENT_MESSAGE && (echo \"$SUCCESS_MESSAGE\"; exit 0)  || (echo \"$FAILURE_MESSAGE\"; exit 1)"
