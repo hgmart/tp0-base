@@ -17,7 +17,7 @@ def define_server() -> list[Container]:
         'LOGGING_LEVEL=DEBUG'
         ],
         networks=['testing_net'],
-        volumes=['server_configs:/configs']
+        volumes=['/config.yaml:/config.yaml']
     )
 )]
 
@@ -31,7 +31,7 @@ def define_clients(clients_number) -> list[Container]:
         entrypoint='/client',
         environment=[f'CLI_ID={i+1}', 'CLI_LOG_LEVEL=DEBUG'],
         networks=['testing_net'],
-        volumes=['client_configs:/configs'],
+        volumes=['/config.ini:/config.ini'],
         depends_on=['server']
     )) for i in range(clients_number)]
 
@@ -50,13 +50,6 @@ def define_network() -> Container:
                 )
             )
         )
-
-# valida que el primer parámetro sea un string y el segundo un número positivo
-def define_volumes() -> list[Container]:
-    return [
-       Container(name='server_configs'),
-       Container(name='client_configs')
-    ]
 
 # valida que el primer parámetro sea un string y el segundo un número positivo
 def validate_parameters(args):
@@ -81,10 +74,6 @@ def main(args):
                 list = define_server() + define_clients(clients_range),
             ),
             networks = define_network(),
-            volumes = Container(
-               name='volumes',
-               list=define_volumes()
-            )
         )
 
         print(composeFile.serialize())
