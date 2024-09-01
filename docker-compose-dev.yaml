@@ -23,6 +23,8 @@ services:
       - testing_net
     depends_on:
       - server
+    volumes:
+      - client_configs:/configs
 
 networks:
   testing_net:
@@ -33,3 +35,4 @@ networks:
 
 volumes:
   server_configs:
+  client_configs:
