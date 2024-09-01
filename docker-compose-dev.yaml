@@ -9,6 +9,8 @@ services:
       - LOGGING_LEVEL=DEBUG
     networks:
       - testing_net
+    volumes:
+      - server_configs:/configs
 
   client1:
     container_name: client1
@@ -28,3 +30,6 @@ networks:
       driver: default
       config:
         - subnet: 172.25.125.0/24
+
+volumes:
+  server_configs:
