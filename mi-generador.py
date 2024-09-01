@@ -49,24 +49,36 @@ def define_network() -> Container:
             )
         )
 
+# valida que el primer parámetro sea un string y el segundo un número positivo
+def validate_parameters(args):
+    try:
+        return len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str) and int(args[1]) and int(args[1]) > 0
+    
+    except:
+        return False
+
 # punto de inicio de la aplicación
 def main(args):
-    clients_range=int(args[1])
 
-    composeFile = ComposeFile(
-        name = 'tp0',
-        services = Container(
-            name = 'services',
-            list = define_server() + define_clients(clients_range),
-        ),
-        networks = define_network()
-    )
+    if (validate_parameters(args)):
 
-    with open(args[0], 'w') as file:
-        file.write(composeFile.serialize())
+        file_name = args[0]
+        clients_range = int(args[1])
+
+        composeFile = ComposeFile(
+            name = 'tp0',
+            services = Container(
+                name = 'services',
+                list = define_server() + define_clients(clients_range),
+            ),
+            networks = define_network()
+        )
+
+        with open(file_name, 'w') as file:
+            file.write(composeFile.serialize())
+
+    else:
+        print('Se espera como primer parámetro un nombre de archivo y como segundo parámetro un número de clientes.', file=sys.stderr)
+        sys.exit(1)
 
 main(sys.argv[1:])
-
-
-
-
