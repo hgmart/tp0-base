@@ -16,7 +16,8 @@ def define_server() -> list[Container]:
         'PYTHONUNBUFFERED=1',
         'LOGGING_LEVEL=DEBUG'
         ],
-        networks=['testing_net']
+        networks=['testing_net'],
+        volumes=['server_configs:/configs']
     )
 )]
 
@@ -50,12 +51,18 @@ def define_network() -> Container:
         )
 
 # valida que el primer parámetro sea un string y el segundo un número positivo
+def define_volumes():
+    return Container(
+       list=['server_configs']
+    )
+
+# valida que el primer parámetro sea un string y el segundo un número positivo
 def validate_parameters(args):
     try:
         return len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str) and int(args[1]) and int(args[1]) > 0
     
     except:
-        return False
+        return False   
 
 # punto de inicio de la aplicación
 def main(args):
@@ -71,7 +78,8 @@ def main(args):
                 name = 'services',
                 list = define_server() + define_clients(clients_range),
             ),
-            networks = define_network()
+            networks = define_network(),
+            volumes = define_volumes(),
         )
 
         with open(file_name, 'w') as file:
