@@ -10,7 +10,7 @@ services:
     networks:
       - testing_net
     volumes:
-      - /config.yaml:/config.yaml
+      - ./server/config.ini:/config.ini
 
   client1:
     container_name: client1
@@ -21,10 +21,10 @@ services:
       - CLI_LOG_LEVEL=DEBUG
     networks:
       - testing_net
+    volumes:
+      - ./client/config.yaml:/config.yaml
     depends_on:
       - server
-    volumes:
-      - /config.ini:/config.ini
 
 networks:
   testing_net:

@@ -17,7 +17,7 @@ def define_server() -> list[Container]:
         'LOGGING_LEVEL=DEBUG'
         ],
         networks=['testing_net'],
-        volumes=['/config.yaml:/config.yaml']
+        volumes=['./server/config.ini:/config.ini']
     )
 )]
 
@@ -31,7 +31,7 @@ def define_clients(clients_number) -> list[Container]:
         entrypoint='/client',
         environment=[f'CLI_ID={i+1}', 'CLI_LOG_LEVEL=DEBUG'],
         networks=['testing_net'],
-        volumes=['/config.ini:/config.ini'],
+        volumes=['./client/config.yaml:/config.yaml'],
         depends_on=['server']
     )) for i in range(clients_number)]
 
