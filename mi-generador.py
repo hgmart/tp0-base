@@ -62,7 +62,8 @@ def main(args):
         networks = define_network()
     )
 
-    print(composeFile.serialize())
+    with open(args[0], 'w') as file:
+        file.write(composeFile.serialize())
 
 main(sys.argv[1:])
 
