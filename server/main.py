@@ -4,6 +4,7 @@ from configparser import ConfigParser
 from common.server import Server
 import logging
 import os
+import signal
 
 
 def initialize_config():
@@ -33,7 +34,6 @@ def initialize_config():
 
     return config_params
 
-
 def main():
     config_params = initialize_config()
     logging_level = config_params["logging_level"]
@@ -48,8 +48,9 @@ def main():
                   f"listen_backlog: {listen_backlog} | logging_level: {logging_level}")
 
     # Initialize server and start server loop
-    server = Server(port, listen_backlog)
-    server.run()
+    with Server(port,listen_backlog) as server:
+        signal.signal(signal.SIGTERM, server.close)
+        server.run()
 
 def initialize_log(logging_level):
     """

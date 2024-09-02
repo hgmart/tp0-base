@@ -3,11 +3,24 @@ import logging
 
 
 class Server:
+
     def __init__(self, port, listen_backlog):
+        self.is_enabled = True
+        self._server_socket = None
+        self.port = port
+        self.listen_backlog = listen_backlog
+
+    def __enter__(self):
         # Initialize server socket
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._server_socket.bind(('', port))
-        self._server_socket.listen(listen_backlog)
+        self._server_socket.bind(('', self.port))
+        self._server_socket.listen(self.listen_backlog)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if ( self._server_socket is not None):
+            self._server_socket.close()
+        return True
 
     def run(self):
         """
@@ -17,12 +30,18 @@ class Server:
         communication with a client. After client with communucation
         finishes, servers starts to accept new connections again
         """
+        
+        while self.is_enabled:
+            try:
+                client_sock = self.__accept_new_connection()
+                self.__handle_client_connection(client_sock)
+            except Exception as e:
+                logging.error(f"action: server_failure | result: fail | error raised while waiting new incoming connection: {e}")
 
-        # TODO: Modify this program to handle signal to graceful shutdown
-        # the server
-        while True:
-            client_sock = self.__accept_new_connection()
-            self.__handle_client_connection(client_sock)
+    def close(self, signal_number, frame):
+        logging.debug(f"action: sigterm_signal | result: success | signal {signal_number} received")
+        self.is_enabled = False
+        self._server_socket.close()
 
     def __handle_client_connection(self, client_sock):
         """
