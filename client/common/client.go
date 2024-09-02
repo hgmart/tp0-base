@@ -4,6 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/op/go-logging"
@@ -21,15 +24,17 @@ type ClientConfig struct {
 
 // Client Entity that encapsulates how
 type Client struct {
-	config ClientConfig
-	conn   net.Conn
+	config    ClientConfig
+	conn      net.Conn
+	isEnabled bool
 }
 
 // NewClient Initializes a new client receiving the configuration
 // as a parameter
 func NewClient(config ClientConfig) *Client {
 	client := &Client{
-		config: config,
+		config:    config,
+		isEnabled: true,
 	}
 	return client
 }
@@ -52,9 +57,14 @@ func (c *Client) createClientSocket() error {
 
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
+
+	signals := make(chan os.Signal, 1)
+	isSocketEnabled := make(chan bool, 1)
+	signal.Notify(signals, syscall.SIGTERM)
+
 	// There is an autoincremental msgID to identify every message sent
 	// Messages if the message amount threshold has not been surpassed
-	for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
+	for msgID := 1; c.isEnabled && msgID <= c.config.LoopAmount; msgID++ {
 		// Create the connection the server in every loop iteration. Send an
 		c.createClientSocket()
 
@@ -81,8 +91,35 @@ func (c *Client) StartClientLoop() {
 			msg,
 		)
 
-		// Wait a time between sending one message and the next one
-		time.Sleep(c.config.LoopPeriod)
+		go func() {
+			select {
+			// Waits a time between sending one message and the next one
+			case currentTime := <-time.After(c.config.LoopPeriod):
+				log.Infof("action: sleep_time | result: success | client_id: %v | msg: awaiked at %v",
+					c.config.ID,
+					currentTime,
+				)
+				isSocketEnabled <- true
+
+			case received_signal := <-signals:
+				log.Debugf("action: sigterm_signal | result: success | client_id: %v | msg: %v signal received",
+					c.config.ID,
+					received_signal,
+				)
+
+				err := c.conn.Close()
+				if err != nil {
+					log.Errorf("action: closing_connection | result: fail | client_id: %v | error: %v",
+						c.config.ID,
+						err,
+					)
+				}
+
+				isSocketEnabled <- false
+			}
+		}()
+
+		c.isEnabled = <-isSocketEnabled
 
 	}
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
