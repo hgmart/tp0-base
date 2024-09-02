@@ -48,10 +48,10 @@ def define_network() -> Container:
             )
         )
 
-# valida que el primer parámetro sea un string y el segundo un número positivo
+# valida que el primer parámetro sea un string y el segundo un número mayor o igual a cero.
 def validate_parameters(args):
     try:
-        return len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str) and int(args[1]) and int(args[1]) > 0
+        return len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str) and int(args[1]) >= 0
     
     except:
         return False   
