@@ -36,10 +36,10 @@ class Server:
                 client_sock = self.__accept_new_connection()
                 self.__handle_client_connection(client_sock)
             except Exception as e:
-                logging.error(f"action: server_failure | result: fail | error raised while waiting new incoming connection: {e}")
+                logging.error(f"action: server_failure | result: fail | detail: error raised while waiting new incoming connection: {e}")
 
     def close(self, signal_number, frame):
-        logging.debug(f"action: sigterm_signal | result: success | signal {signal_number} received")
+        logging.debug(f"action: sigterm_signal | result: success | detail: signal {signal_number} received")
         self.is_enabled = False
         self._server_socket.close()
 
