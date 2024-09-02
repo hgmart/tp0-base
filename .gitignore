@@ -3,3 +3,9 @@
 
 # Executables
 bin/
+
+# Python
+*.pyc
+
+# VSCode
+.vscode/
