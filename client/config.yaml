@@ -7,3 +7,5 @@ log:
   level: "DEBUG"
 batch:
   maxAmount: 10
+protocol:
+  payload: 1024

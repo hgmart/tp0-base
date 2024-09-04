@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/common"
+	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/communication"
 )
 
 var log = logging.MustGetLogger("log")
@@ -37,6 +38,7 @@ func InitConfig() (*viper.Viper, error) {
 	v.BindEnv("loop", "period")
 	v.BindEnv("loop", "amount")
 	v.BindEnv("log", "level")
+	v.BindEnv("protocol", "payload")
 
 	// Try to read configuration from config file. If config file
 	// does not exists then ReadInConfig will fail but configuration
@@ -90,6 +92,21 @@ func PrintConfig(v *viper.Viper) {
 	)
 }
 
+func BuildBet() *common.Bet {
+	firstname := os.Getenv("NOMBRE")
+	surname := os.Getenv("APELLIDO")
+	document := os.Getenv("DOCUMENTO")
+	bornDate := os.Getenv("NACIMIENTO")
+	number := os.Getenv("NUMERO")
+
+	if firstname == "" || surname == "" || document == "" || bornDate == "" || number == "" {
+		log.Errorf("action: apuesta_invalida | result: fail | msg: se esperan las variables NOMBRE APELLIDO DOCUMENTO NACIMIENTO y NUMERO")
+		os.Exit(1)
+	}
+
+	return common.NewSingleBet(firstname, surname, document, bornDate, number)
+}
+
 func main() {
 	v, err := InitConfig()
 	if err != nil {
@@ -104,12 +121,27 @@ func main() {
 	PrintConfig(v)
 
 	clientConfig := common.ClientConfig{
-		ServerAddress: v.GetString("server.address"),
-		ID:            v.GetString("id"),
-		LoopAmount:    v.GetInt("loop.amount"),
-		LoopPeriod:    v.GetDuration("loop.period"),
+		ServerAddress:  v.GetString("server.address"),
+		ID:             v.GetString("id"),
+		LoopAmount:     v.GetInt("loop.amount"),
+		LoopPeriod:     v.GetDuration("loop.period"),
+		PayloadMaxSize: v.GetInt("protocol.payload"),
 	}
 
 	client := common.NewClient(clientConfig)
-	client.StartClientLoop()
+
+	singleBet := BuildBet()
+
+	singleBetArray := singleBet.ToArray()
+	data := communication.Build("S", singleBetArray)
+
+	succeeded, error := client.SendBytes(data)
+
+	if succeeded {
+		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v", singleBet.GetDocument(), singleBet.GetBetNumber())
+		os.Exit(0)
+	} else {
+		log.Errorf("action: apuesta_enviada | result: fail | msg: %v", error)
+		os.Exit(1)
+	}
 }
