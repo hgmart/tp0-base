@@ -58,13 +58,12 @@ class Server:
     
     def __process_message(self, bytes):
         chunk = bytes.split(b'\x00')
-        message_type = chunk.pop(0)
-
-        if (message_type == 'S'):
-            information = [ data.decode('utf-8') for data in chunk]
-            logging.debug(information)
-            bet = Bet(*information)
-            logging.debug(bet)
+        message_type = chunk.pop(0).decode('utf-8')
+        information = [ data.decode('utf-8') for data in chunk[:len(chunk)-1]]
+        logging.debug(information)
+        
+        if (message_type == 'S'):    
+            bet = Bet("0", information[0], information[1], information[2], information[3], information[4])
             store_bets([bet])
             return True
         
@@ -84,20 +83,23 @@ class Server:
 
         return bytes + rec_bytes == len(data)
 
-    def __handle_received_message(self, client_sock):
+    def __handle_received_message(self, client_sock, bytes):
         try:
             succeeded = self.__process_message(bytes)
 
             if succeeded:            
                 status_code = "200"
+                logging.info("action: processing_message | result: success | status_code: 200 | msg: bet saved")
                 self.__recursive_send(client_sock, status_code.encode('utf-8'))
 
             else:
                 status_code = "400"
+                logging.error("action: processing_message | result: fail | status_code: 400 | msg: incorrect format")
                 self.__recursive_send(client_sock, status_code.encode('utf-8'))
 
-        except:
+        except Exception as e:
             status_code = "422"
+            logging.error(f"action: processing_message | result: fail | status_code: 422 | error: {e}")
             self.__recursive_send(client_sock, status_code.encode('utf-8'))
 
     def __handle_client_connection(self, client_sock):
@@ -111,7 +113,7 @@ class Server:
             bytes = self.__recursive_receive(client_sock)
             addr = client_sock.getpeername()
             logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {bytes}')
-            self.__handle_received_message(client_sock)
+            self.__handle_received_message(client_sock, bytes)
 
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
