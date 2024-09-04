@@ -1,14 +1,15 @@
 import socket
 import logging
-
+from common.utils import *
 
 class Server:
 
-    def __init__(self, port, listen_backlog):
+    def __init__(self, port, listen_backlog, protocol_payload):
         self.is_enabled = True
         self._server_socket = None
         self.port = port
         self.listen_backlog = listen_backlog
+        self.protocol_payload = protocol_payload
 
     def __enter__(self):
         # Initialize server socket
@@ -43,6 +44,62 @@ class Server:
         self.is_enabled = False
         self._server_socket.close()
 
+    def __recursive_receive(self, client_sock):
+
+        bytes = client_sock.recv(self.protocol_payload)
+        logging.info(f'action: msg_received | bytes: {len(bytes)}')
+
+        if (len(bytes) < self.protocol_payload):
+            return bytes
+        
+        more_bytes = self.__recursive_receive(client_sock)
+
+        return bytes + more_bytes
+    
+    def __process_message(self, bytes):
+        chunk = bytes.split(b'\x00')
+        message_type = chunk.pop(0)
+
+        if (message_type == 'S'):
+            information = [ data.decode('utf-8') for data in chunk]
+            logging.debug(information)
+            bet = Bet(*information)
+            logging.debug(bet)
+            store_bets([bet])
+            return True
+        
+        return False
+
+    def __recursive_send(self, client_sock, data):
+
+        chunkSize = len(data) if len(data) < self.protocol_payload else self.protocol_payload
+        chunk = data[:chunkSize]
+
+        bytes = client_sock.send(chunk)
+
+        if ( bytes == len(data) ):
+            return True
+        
+        rec_bytes = self.__recursive_send(client_sock, data[bytes:])
+
+        return bytes + rec_bytes == len(data)
+
+    def __handle_received_message(self, client_sock):
+        try:
+            succeeded = self.__process_message(bytes)
+
+            if succeeded:            
+                status_code = "200"
+                self.__recursive_send(client_sock, status_code.encode('utf-8'))
+
+            else:
+                status_code = "400"
+                self.__recursive_send(client_sock, status_code.encode('utf-8'))
+
+        except:
+            status_code = "422"
+            self.__recursive_send(client_sock, status_code.encode('utf-8'))
+
     def __handle_client_connection(self, client_sock):
         """
         Read message from a specific client socket and closes the socket
@@ -51,12 +108,11 @@ class Server:
         client socket will also be closed
         """
         try:
-            # TODO: Modify the receive to avoid short-reads
-            msg = client_sock.recv(1024).rstrip().decode('utf-8')
+            bytes = self.__recursive_receive(client_sock)
             addr = client_sock.getpeername()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            # TODO: Modify the send to avoid short-writes
-            client_sock.send("{}\n".format(msg).encode('utf-8'))
+            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {bytes}')
+            self.__handle_received_message(client_sock)
+
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
