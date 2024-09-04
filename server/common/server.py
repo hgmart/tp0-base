@@ -60,11 +60,11 @@ class Server:
         chunk = bytes.split(b'\x00')
         message_type = chunk.pop(0).decode('utf-8')
         information = [ data.decode('utf-8') for data in chunk[:len(chunk)-1]]
-        logging.debug(information)
         
         if (message_type == 'S'):    
-            bet = Bet("0", information[0], information[1], information[2], information[3], information[4])
+            bet = Bet(information[0], information[1], information[2], information[3], information[4], information[5])
             store_bets([bet])
+            logging.info(f"action: bet_saved | result: success | bet: {information}")
             return True
         
         return False

@@ -104,7 +104,10 @@ func BuildBet() *common.Bet {
 		os.Exit(1)
 	}
 
-	return common.NewSingleBet(firstname, surname, document, bornDate, number)
+	// para éste ejemplo asigno la agencia 1 por defecto
+	agency := 1
+
+	return common.NewSingleBet(agency, firstname, surname, document, bornDate, number)
 }
 
 func main() {
@@ -135,9 +138,9 @@ func main() {
 	singleBetArray := singleBet.ToArray()
 	data := communication.Build("S", singleBetArray)
 
-	succeeded, msg, error := client.SendBytes(data)
+	succeeded, bytes, error := client.SendBytes(data)
 
-	if succeeded && msg != nil {
+	if succeeded && bytes != nil && string(bytes) == "200" {
 		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v", singleBet.GetDocument(), singleBet.GetBetNumber())
 		os.Exit(0)
 	} else {

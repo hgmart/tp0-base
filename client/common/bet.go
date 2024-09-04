@@ -1,6 +1,11 @@
 package common
 
+import (
+	"strconv"
+)
+
 type Bet struct {
+	agency    int
 	firstname string
 	surname   string
 	document  string
@@ -8,8 +13,9 @@ type Bet struct {
 	betValue  string
 }
 
-func NewSingleBet(firstname string, surname string, document string, bornDate string, betValue string) *Bet {
+func NewSingleBet(agency int, firstname string, surname string, document string, bornDate string, betValue string) *Bet {
 	singleBet := &Bet{
+		agency:    agency,
 		firstname: firstname,
 		surname:   surname,
 		document:  document,
@@ -22,6 +28,7 @@ func NewSingleBet(firstname string, surname string, document string, bornDate st
 
 func (bet *Bet) ToArray() []string {
 	array := []string{
+		strconv.Itoa(bet.agency),
 		bet.firstname,
 		bet.surname,
 		bet.document,
