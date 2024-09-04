@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -92,22 +93,20 @@ func PrintConfig(v *viper.Viper) {
 	)
 }
 
-func BuildBet() *common.Bet {
+func BuildBet(agency string) *common.Bet {
 	firstname := os.Getenv("NOMBRE")
 	surname := os.Getenv("APELLIDO")
 	document := os.Getenv("DOCUMENTO")
 	bornDate := os.Getenv("NACIMIENTO")
 	number := os.Getenv("NUMERO")
+	agency_number, err := strconv.Atoi(agency)
 
-	if firstname == "" || surname == "" || document == "" || bornDate == "" || number == "" {
+	if firstname == "" || surname == "" || document == "" || bornDate == "" || number == "" || err != nil {
 		log.Errorf("action: apuesta_invalida | result: fail | msg: se esperan las variables NOMBRE APELLIDO DOCUMENTO NACIMIENTO y NUMERO")
 		os.Exit(1)
 	}
 
-	// para éste ejemplo asigno la agencia 1 por defecto
-	agency := 1
-
-	return common.NewSingleBet(agency, firstname, surname, document, bornDate, number)
+	return common.NewSingleBet(agency_number, firstname, surname, document, bornDate, number)
 }
 
 func main() {
@@ -133,7 +132,7 @@ func main() {
 
 	client := common.NewClient(clientConfig)
 
-	singleBet := BuildBet()
+	singleBet := BuildBet(clientConfig.ID)
 
 	singleBetArray := singleBet.ToArray()
 	data := communication.Build("S", singleBetArray)
