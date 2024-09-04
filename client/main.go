@@ -135,9 +135,9 @@ func main() {
 	singleBetArray := singleBet.ToArray()
 	data := communication.Build("S", singleBetArray)
 
-	succeeded, error := client.SendBytes(data)
+	succeeded, msg, error := client.SendBytes(data)
 
-	if succeeded {
+	if succeeded && msg != nil {
 		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v", singleBet.GetDocument(), singleBet.GetBetNumber())
 		os.Exit(0)
 	} else {
