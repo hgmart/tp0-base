@@ -4,8 +4,9 @@ loop:
   amount: 5
   period: "100ms"
 log:
-  level: "DEBUG"
+  level: "INFO"
 batch:
   maxAmount: 10
+  zipFilePath: 'dataset.zip'
 protocol:
-  payload: 1024
+  payload: 8046

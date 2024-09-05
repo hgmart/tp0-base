@@ -128,19 +128,24 @@ func main() {
 		LoopAmount:     v.GetInt("loop.amount"),
 		LoopPeriod:     v.GetDuration("loop.period"),
 		PayloadMaxSize: v.GetInt("protocol.payload"),
+		ZipBatchPath:   v.GetString("batch.zipFilePath"),
 	}
 
 	client := common.NewClient(clientConfig)
+	batch := common.NewBatch(clientConfig)
+	bytes, err := batch.ProcessBatchFile()
 
-	singleBet := BuildBet(clientConfig.ID)
+	if err != nil {
+		log.Infof("action: archivo_procesado | result: fail | agency: %v | size: %v", clientConfig.ID, len(bytes))
+		os.Exit(1)
+	}
 
-	singleBetArray := singleBet.ToArray()
-	data := communication.Build("S", singleBetArray)
+	data := communication.BatchProcessing("B", clientConfig.ID, bytes)
 
 	succeeded, bytes, error := client.SendBytes(data)
 
 	if succeeded && bytes != nil && string(bytes) == "200" {
-		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v", singleBet.GetDocument(), singleBet.GetBetNumber())
+		log.Infof("action: apuesta_enviada | result: success | agency: %v | size: %v", clientConfig.ID, len(bytes))
 		os.Exit(0)
 	} else {
 		log.Errorf("action: apuesta_enviada | result: fail | msg: %v", error)

@@ -21,6 +21,7 @@ type ClientConfig struct {
 	LoopAmount     int
 	LoopPeriod     time.Duration
 	PayloadMaxSize int
+	ZipBatchPath   string
 }
 
 // Client Entity that encapsulates how
@@ -55,12 +56,18 @@ func (c *Client) createClientSocket() error {
 			c.config.ID,
 			err,
 		)
+
+		c.isEnabled = false
 	}
 	c.conn = conn
 	return nil
 }
 
 func (c *Client) closeSocketConnection() {
+	if c.conn == nil {
+		return
+	}
+
 	err := c.conn.Close()
 	if err != nil {
 		log.Errorf("action: closing_connection | result: fail | client_id: %v | error: %v",
@@ -127,8 +134,6 @@ func (c *Client) delayMessageDelivery(signals chan os.Signal) {
 			c.config.ID,
 			currentTime,
 		)
-
-		c.isEnabled = true
 
 	case received_signal := <-signals:
 		log.Debugf("action: sigterm_signal | result: success | client_id: %v | msg: %v signal received",

@@ -47,7 +47,6 @@ class Server:
     def __recursive_receive(self, client_sock):
 
         bytes = client_sock.recv(self.protocol_payload)
-        logging.info(f'action: msg_received | bytes: {len(bytes)}')
 
         if (len(bytes) < self.protocol_payload):
             return bytes
@@ -57,14 +56,25 @@ class Server:
         return bytes + more_bytes
     
     def __process_message(self, bytes):
-        chunk = bytes.split(b'\x00')
-        message_type = chunk.pop(0).decode('utf-8')
-        information = [ data.decode('utf-8') for data in chunk[:len(chunk)-1]]
-        
-        if (message_type == 'S'):    
-            bet = Bet(information[0], information[1], information[2], information[3], information[4], information[5])
-            store_bets([bet])
-            logging.info(f"action: bet_saved | result: success | bet: {information}")
+        chunks = bytes.split(b'\x01')
+        metadata = chunks.pop(0)
+        message_metadata = [data.decode('utf-8') for data in metadata.split(b'\x00')]
+
+        if message_metadata[0] == 'B': 
+            agency = message_metadata[1]
+            bets = []
+            index = 1
+            for bet in chunks:
+                if len(bet) > 0:
+                    properties = bet.split(b'\x00')
+                    information = [property.decode('utf-8') for property in properties]
+                    logging.debug(f"action: bet_saved | result: success | agency: {agency} | index: {index}| bet: {information}")
+                    index = index + 1
+                    bets.append(Bet(agency, information[0], information[1], information[2], information[3], information[4]))
+
+            store_bets(bets)
+            logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets)}")
+            
             return True
         
         return False
@@ -112,7 +122,7 @@ class Server:
         try:
             bytes = self.__recursive_receive(client_sock)
             addr = client_sock.getpeername()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {bytes}')
+            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {len(bytes)}')
             self.__handle_received_message(client_sock, bytes)
 
         except OSError as e:

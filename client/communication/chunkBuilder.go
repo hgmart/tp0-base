@@ -1,10 +1,34 @@
 package communication
 
 import (
+	"bytes"
+
 	"github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("log")
+
+func BatchProcessing(chunkType string, agency string, data []byte) []byte {
+
+	propertyDivider := []byte{0}
+	chunksDivider := []byte{1}
+
+	block0 := []byte(chunkType)
+	block1 := []byte(agency)
+
+	// Modifica el separador \r\n por el byte 1
+	newdata := bytes.ReplaceAll(data, []byte("\r\n"), chunksDivider)
+
+	// Modifica el separador ASCII ',' por el byte 0
+	newdata = bytes.ReplaceAll(newdata, []byte{44}, propertyDivider)
+
+	messageType := append(block0, propertyDivider...)
+	messageAgency := append(block1, chunksDivider...)
+
+	messageMetadata := append(messageType, messageAgency...)
+
+	return append(messageMetadata, newdata...)
+}
 
 func Build(chunkType string, data []string) []byte {
 

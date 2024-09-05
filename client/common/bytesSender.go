@@ -106,7 +106,7 @@ func (c *Client) SendData(data []byte, signals chan os.Signal, chunk_number int)
 		return -1, err
 	}
 
-	log.Infof("action: data_sent | client: %v | chunk_number: %v | chunk_size: %v | msg: %v", c.config.ID, chunk_number, len(chunkData), chunkData)
+	log.Debugf("action: data_sent | client: %v | chunk_number: %v | chunk_size: %v", c.config.ID, chunk_number, len(chunkData))
 
 	if bytesWritten == len(data) {
 		return bytesWritten, nil
@@ -132,10 +132,10 @@ func (c *Client) SendBytes(chunkData []byte) (bool, []byte, error) {
 	}()
 
 	c.createClientSocket()
-	log.Infof("action: message_to_be_sent | client: %v | chunk_size: %v | msg: %v", c.config.ID, len(chunkData), chunkData)
+	log.Infof("action: message_to_be_sent | client: %v | chunk_size: %v", c.config.ID, len(chunkData))
 
 	bytesWritten, sentErr := c.SendData(chunkData, signals, 1)
-	log.Infof("action: mensaje_enviado | result: %v | client: %v | chunk_size: %v | bytes_sent: %v", sentErr == nil, c.config.ID, len(chunkData), bytesWritten)
+	log.Infof("action: mensaje_enviado | result: %v | client: %v | data_size: %v | bytes_sent: %v", sentErr == nil && bytesWritten == len(chunkData), c.config.ID, len(chunkData), bytesWritten)
 
 	if sentErr != nil {
 		c.closeSocketConnection()
